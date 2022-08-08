@@ -41,7 +41,9 @@ router.post("/publish", auth, async (req, res, next) => {
 
         const project_ID = project.centralID
 
-        const form = await Form.findOne({ name: req.query.form_name })
+        // Finding the form and making sure that there is a 
+        // a draft form with this name 
+        const form = await Form.findOne({ name: req.query.form_name, draft: true})
         if (!form) throw new HttpError("Form does not exist in RHoMIS db", 400)
 
         // ******************** SEND TO ODK CENTRAL ******************** //
@@ -69,6 +71,9 @@ router.post("/publish", auth, async (req, res, next) => {
             },
             {
                 draft: false,
+                live: true,
+                liveVersion: form.formVersion,
+                draftVersion: null
             }
         )
 
@@ -106,12 +111,46 @@ router.post("/new-draft", auth, async (req, res, next) => {
         if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
         // Check if form exists
-        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+
+
+        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name})
         if (!form) throw new HttpError("Cannot find form to update", 400)
 
         // If form version doesn't exist in query, increment the existing form_version
-        const formVersion = req.query.form_version ?? Number(form.formVersion) + 1
+        // Need to consider the cases where a draft form exists, where a published form
+        // exists, and where both exist.
+        let formVersion = null
+
+       
+        if (req.query.form_version){
+            formVersion = req.query.form_version
+
+        } else if (form.draft==true){   
+            if (isNaN(Number(form.draftVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.draftVersion) + 1
+            }
+
+
+        }
+
+        else if (form.live==true){
+            if (isNaN(Number(form.liveVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.liveVersion) + 1
+            }
+
+        }else {
+            throw new HttpError("Could not find a version to assign to this form", 500)
+        }
         
+
+        // console.log("formVersion")
+
+        // console.log(formVersion)
+        // return res.send("debugging")
 
         // ******************** SEND FORM TO ODK CENTRAL ******************** //
         // Authenticate on ODK central
@@ -149,7 +188,8 @@ router.post("/new-draft", auth, async (req, res, next) => {
                 project: req.query.project_name 
             },
             {
-                formVersion: formVersion
+                draftVersion: formVersion,
+                draft:true
             }
         )
 
@@ -173,9 +213,9 @@ router.post("/new-draft", auth, async (req, res, next) => {
 router.post("/new", auth, async (req, res, next) => {
 
     console.log("user: " + req.user._id)
+
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
-    console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
             
@@ -197,8 +237,32 @@ router.post("/new", auth, async (req, res, next) => {
         
         // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
         const project_ID = project.centralID
-        const publish = req.query.publish ?? 'false'
-        const formVersion = req.query.formVersion ?? 1
+        // const publish = req.query.publish ?? 'false'
+        let formVersion = null
+
+        if (req.query.form_version){
+            formVersion = req.query.form_version
+
+        } else if (form.draft==true){   
+            if (isNaN(Number(form.draftVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.draftVersion) + 1
+            }
+
+
+        }
+
+        else if (form.live==true){
+            if (isNaN(Number(form.liveVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.liveVersion) + 1
+            }
+
+        }else {
+            throw new HttpError("Could not find a version to assign to this form", 500)
+        }
         // Authenticate on ODK central
         const token = await getCentralToken()
 
@@ -208,7 +272,7 @@ router.post("/new", auth, async (req, res, next) => {
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true',
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -300,14 +364,15 @@ router.post("/new", auth, async (req, res, next) => {
         const formInformation = {
             name: req.query.form_name,
             project: req.query.project_name,
-            formVersion: formVersion,
+            draftVersion: formVersion,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
-            draft: !publish,
+            draft: true,
+            live: false,
             complete: false,
             collectionDetails: {
                 general: {
-                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
+                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID + "/forms/" + req.query.form_name,
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },

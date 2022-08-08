@@ -40,12 +40,24 @@ const formSchema = new mongoose.Schema({
     formVersion: {
         type: String,
     },
+    draftVersion: {
+        type: String,
+        default: null
+    },
+    liveVersion: {
+        type: String,
+        default: null
+
+    },
     draft: {
         type: Boolean,
     },
     complete: {
         type: Boolean,
     },
+    live: {
+        type: Boolean,
+    }, 
     createdAt: {
         type: Date,
         default: Date.now

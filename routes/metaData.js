@@ -85,9 +85,16 @@ async function getSubmissionCounts(props) {
 
 
     const token = await getCentralAuthToken()
-    const centralResponse = await axios({
+
+    let submissions = {
+        live:null,
+        draft:null
+    }
+
+    if (form.draft==true){
+    const centralResponseDraft = await axios({
         method: "get",
-        url: url,
+        url: url.draft,
         headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
@@ -97,24 +104,41 @@ async function getSubmissionCounts(props) {
             console.log(error)
             throw error
         })
+        submissions.draft = centralResponseDraft.data.length
 
 
-    const number_of_submissions = centralResponse.data.length
+    }
+    if (form.live===true){
 
-    return number_of_submissions
+        const centralResponseLive = await axios({
+            method: "get",
+            url: url.live,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+        })
+            .catch(function (error) {
+                console.log(error)
+                throw error
+            })
+
+
+            submissions.live = centralResponseLive.data.length
+
+        }
+    return submissions
 
 }
 
 function BuildSubmissionURL(props) {
 
-
-    if (props.form.draft === false) {
-        return  process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions'
+    let submission_urls = {
+        live: process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions',
+        draft: process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/draft/submissions'
     }
 
-    if (props.form.draft = true) {
-        return process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/draft/submissions'
-    }
+    return submission_urls
 }
 
 module.exports = router
