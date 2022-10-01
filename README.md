@@ -14,7 +14,7 @@ To download clone this repository, run the command:
 
 `git clone git@github.com:l-gorman/rhomis-authenticator.git`
 
-After cloning the repository, you will need to install the dependencies.
+After cloning the repository, you will need to install the dependencies,
 This can be done by running the command:
 
 `npm install`
