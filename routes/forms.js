@@ -34,8 +34,9 @@ router.post("/publish", auth, async (req, res, next) => {
     try {
 
         // ******************** VALIDATE REQUEST ******************** //
-        const validatedReq = validateRequestQuery(req, ['project_name', 'form_name'])
+        console.log(req.query)
 
+        const validatedReq = await validateRequestQuery(req, ['project_name', 'form_name'])
         const project = await Project.findOne({ name: req.query.project_name })
         if (!project) throw new HttpError("Project does not exist in RHoMIS db", 400)
 
@@ -52,7 +53,7 @@ router.post("/publish", auth, async (req, res, next) => {
 
         const centralResponse = await axios({
             method: "post",
-            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.draftVersion,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -119,32 +120,8 @@ router.post("/new-draft", auth, async (req, res, next) => {
         // If form version doesn't exist in query, increment the existing form_version
         // Need to consider the cases where a draft form exists, where a published form
         // exists, and where both exist.
-        let formVersion = null
+        let formVersion = form.query.form_version ?? Number(form.draftVersion) + 1
 
-       
-        if (req.query.form_version){
-            formVersion = req.query.form_version
-
-        } else if (form.draft==true){   
-            if (isNaN(Number(form.draftVersion))){
-                formVersion = 1
-            }else{
-                formVersion === Number(form.draftVersion) + 1
-            }
-
-
-        }
-
-        else if (form.live==true){
-            if (isNaN(Number(form.liveVersion))){
-                formVersion = 1
-            }else{
-                formVersion === Number(form.liveVersion) + 1
-            }
-
-        }else {
-            throw new HttpError("Could not find a version to assign to this form", 500)
-        }
         
 
         // console.log("formVersion")
@@ -238,31 +215,10 @@ router.post("/new", auth, async (req, res, next) => {
         // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
         const project_ID = project.centralID
         // const publish = req.query.publish ?? 'false'
-        let formVersion = null
-
-        if (req.query.form_version){
-            formVersion = req.query.form_version
-
-        } else if (form.draft==true){   
-            if (isNaN(Number(form.draftVersion))){
-                formVersion = 1
-            }else{
-                formVersion === Number(form.draftVersion) + 1
-            }
+        let formVersion = req.query.form_version ?? 1
 
 
-        }
-
-        else if (form.live==true){
-            if (isNaN(Number(form.liveVersion))){
-                formVersion = 1
-            }else{
-                formVersion === Number(form.liveVersion) + 1
-            }
-
-        }else {
-            throw new HttpError("Could not find a version to assign to this form", 500)
-        }
+        
         // Authenticate on ODK central
         const token = await getCentralToken()
 
