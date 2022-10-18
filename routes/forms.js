@@ -120,7 +120,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
         // If form version doesn't exist in query, increment the existing form_version
         // Need to consider the cases where a draft form exists, where a published form
         // exists, and where both exist.
-        let formVersion = form.query.form_version ?? Number(form.draftVersion) + 1
+        let formVersion = req.query.form_version ?? Number(form.draftVersion) + 1
 
         
 
