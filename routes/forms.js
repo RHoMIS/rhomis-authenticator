@@ -10,6 +10,9 @@ const User = require('../models/User')
 
 const updateAdmins = require('./makeAdmin').updateAdmins
 
+const log = require('../validation/log');
+const Log = require('../models/Log')
+
 
 let config = require('config'); //we load the db location from the JSON files
 const apiURL = config.get('dataAPI.url')

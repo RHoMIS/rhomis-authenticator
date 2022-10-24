@@ -12,6 +12,10 @@ const Project = require('../models/Project');
 const Form = require('../models/Form');
 const User = require('../models/User');
 
+const log = require('../validation/log');
+const Log = require('../models/Log')
+
+
 router.use(cors());
 router.options("*", cors());
 

@@ -2,6 +2,9 @@ const router = require('express').Router();
 
 const CreateTransporter = require('../email-transporter/email-transporter')
 
+const log = require('../validation/log');
+const Log = require('../models/Log')
+
 const cors = require("cors");
 
 

@@ -16,6 +16,10 @@ router.use(cors());
 router.options("*", cors());
 
 
+const log = require('../validation/log');
+
+
+
 router.post("/", auth, async (req, res) => {
     // write file then read it
     //const writeStatus = await writeToFile(req, res)

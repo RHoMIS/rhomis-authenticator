@@ -5,6 +5,8 @@ const mongoose = require('mongoose')
 
 const dotenv = require('dotenv')
 
+const Log = require('./models/Log')
+
 
 function getEnvFile(nodeEnv){
     if (process.env.NODE_ENV==="test"){
@@ -45,7 +47,7 @@ app.set('trust proxy', 1);
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100
+    max: 1000
 });
 app.use(apiLimiter);
 
@@ -115,6 +117,43 @@ app.use((err, req, res, next) => {
 
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
+})
+
+app.get('/logs', async (req, res) => {
+
+    let header = `
+    <!DOCTYPE html>
+    <html>
+    <body>
+    <pre id="json"></pre>
+
+    <script>
+    
+
+    
+    
+    var data =
+    `
+
+
+    let footer = `
+    document.getElementById("json").textContent = JSON.stringify(data, undefined, 2);
+
+  </script>
+
+</body>
+</html>
+    `
+
+    const logs = await Log.find({}).
+        sort('-time').
+        limit(11)
+    
+     let middle = JSON.stringify(logs) 
+
+     res.send(header+middle+footer)
+
+   
 })
  
 

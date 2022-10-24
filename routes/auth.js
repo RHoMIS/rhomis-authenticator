@@ -5,6 +5,10 @@ const axios = require('axios')
 
 let config = require('config'); //we load the db location from the JSON files
 
+const log = require('../validation/log');
+const Log = require('../models/Log')
+
+
 // Authentication middleware
 const auth = require('../validation/verifyToken')
 const getCentralToken = require('./centralAuth')
@@ -22,28 +26,61 @@ router.options("*", cors());
 
 
 router.get("/", auth, async (req, res) => {
+    
+    const date = Date.now
+
+    log({
+        file: './routes/auth.js',
+        line: '32',
+        info: {
+            message:'Getting user information',
+            data:{
+                'user_id':req.user._id
+            }
+
+        },
+        type: 'message'
+    }, Log)
+
+
     const userInfo = await User.findOne({ _id: req.user._id }, { _id: 0, roles: 1, projects: 1 })
-    console.log(userInfo)
     const projectInfo = await Project.find({ name: { $in: userInfo.projects } }, { _id: 0 })
     const formInfo = await Form.find({ project: { $in: userInfo.projects } }, { _id: 0 })
 
-    console.log(projectInfo)
     let userInfoToReturn = userInfo.roles
     userInfoToReturn.projects = projectInfo
     userInfoToReturn.forms = formInfo
 
-
-
-
-
     res.status(200).send(userInfoToReturn)
+    log({
+        file: './routes/auth.js',
+        line: '56',
+        info: {
+            message:'Successfully returned user information',
+            data:{'user_id': userInfo._id}
+        },
+        type: 'message'
+    },
+        Log)
 })
 
 
 async function verifyCaptcha(props) {
 
+
     try {
         // await timeout(2000)
+        log({
+            file: './routes/auth.js',
+            line: '73',
+            info: {
+                message:'Verifying Captcha',
+                data:{
+                    'props':props
+                }
+            },
+            type: 'message'
+        }, Log)
 
         const query_params = {
             "secret": process.env.RECAPTCHA_SECRET_KEY,
@@ -57,9 +94,29 @@ async function verifyCaptcha(props) {
             params: query_params
         })
 
+        log({
+            file: './routes/auth.js',
+            line: '73',
+            info: {
+                message:'Captcha verified'
+    
+            },
+            type: 'message'
+        }, Log)
+
         return (response)
     } catch (err) {
-        console.log(err)
+
+        log({
+            file: './routes/auth.js',
+            line: '110',
+            info: {
+                message:'Could not successfully verify captcha',
+                'err':err
+    
+            },
+            type: 'message'
+        }, Log)
         return (err)
 
     }
@@ -71,11 +128,35 @@ router.post('/register', async (req, res) => {
 
     // Validate date before making user
     const { error } = registrationValidator(req.body);
-    if (error !== undefined) return res.status(400).send(error.details[0].message)
+    if (error !== undefined) {
+        log({
+            file: './routes/auth.js',
+            line: '134',
+            info: {
+                message:'Issue validating login request',
+                'err':error
+    
+            },
+            type: 'message'
+        }, Log)
+        
+        return res.status(400).send(error.details[0].message)}
 
     // Checking if the user already exists in the database
     const emailExist = await User.findOne({ email: req.body.email })
-    if (emailExist) return res.status(400).send('Email already exists')
+    if (emailExist) {
+        log({
+            file: './routes/auth.js',
+            line: '148',
+            info: {
+                message:'Cannot register email, user already exists',
+                'err':error
+    
+            },
+            type: 'message'
+        }, Log)
+        
+        return res.status(400).send('Email already exists')}
 
     // Obtaining central access token
     try {
@@ -84,6 +165,16 @@ router.post('/register', async (req, res) => {
         const captchaResult = await verifyCaptcha({ captchaToken: req.body.captchaToken })
 
 
+        log({
+            file: './routes/auth.js',
+            line: '168',
+            info: {
+                message:'Creating new user',
+                'err':error
+    
+            },
+            type: 'message'
+        }, Log)
 
         // Save the user in the database
         // Hash passwords
@@ -118,6 +209,17 @@ router.post('/register', async (req, res) => {
         });
 
         const savedUser = await user.save();
+
+        log({
+            file: './routes/auth.js',
+            line: '214',
+            info: {
+                message:'New user successfully created',
+                'err':error
+    
+            },
+            type: 'message'
+        }, Log)
 
         res.status(201).send({
             userID: savedUser._id
