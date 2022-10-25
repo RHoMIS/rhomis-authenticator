@@ -17,9 +17,7 @@ function getEnvFile(nodeEnv){
 }
 
 var envFile = getEnvFile(process.env.NODE_ENV)
-console.log("env file")
-console.log(envFile)
-console.log(process.env.NODE_ENV)
+
 
 
 dotenv.config({path: envFile})
@@ -27,7 +25,6 @@ dotenv.config({path: envFile})
 
 
 
-// console.log(process.env.RECAPTCHA_SECRET_KEY)
 
 // Import Routes
 const authRoute = require('./routes/auth')
@@ -60,11 +57,9 @@ console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
 let dbHost = config.get('dbConfig.host')
 let port = config.get('dbConfig.port')
 
-console.log(config.get('dataAPI.url'))
 
 
 var connectWithRetry = function () {
-    console.log("Connecting to datase")
     return mongoose.connect(dbHost, {
         useNewUrlParser: true,
         useUnifiedTopology: true
