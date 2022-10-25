@@ -20,8 +20,16 @@ router.use(cors());
 router.options("*", cors());
 
 async function initAdmin() {
-
-    console.log("initialising admin")
+    log({
+        file: './routes/makeAdmin.js',
+        line: '25',
+        info: {
+            message:'Initializing admin',
+            
+            
+        },
+        type: 'message'
+    }, Log)
     const salt = await bcrypt.genSalt(10)
     const hashPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt)
     const date = new Date()
@@ -30,9 +38,6 @@ async function initAdmin() {
     const projectIDs = await Project.distinct("name")
     const formIDs = await Form.distinct("name")
 
-    console.log("Adding forms and projects to administrator")
-    // console.log(hashPassword)
-    // console.log(process.env.ADMIN_EMAIL)
 
     const logValue =
     {
@@ -82,7 +87,6 @@ async function initAdmin() {
 
     const newUser = await User.findOne({ "email": process.env.ADMIN_EMAIL })
 
-    console.log("Adding User to forms and projects")
     // Add user to all projects
     const updatedForms = await Form.updateMany({}, {
         $addToSet: {
@@ -96,7 +100,6 @@ async function initAdmin() {
         }
     })
 
-    console.log("Administrator added")
 
     updateAdmins()
 
@@ -104,9 +107,18 @@ async function initAdmin() {
 
 async function updateAdmins() {
 
-    // Add all projects and forms to admins
-    console.log("Updating all admins")
+    log({
+        file: './routes/makeAdmin.js',
+        line: '110',
+        info: {
+            message:'Updating all admins'
+            
+            
+        },
+        type: 'message'
+    }, Log)
 
+    // Add all projects and forms to admins
     const date = new Date()
 
     const projectIDs = await Project.distinct("name")
@@ -143,7 +155,6 @@ async function updateAdmins() {
     userIDs = userIDs.map((id) => id.toString())
 
 
-    console.log("Adding Admins to forms and projects")
     // Add user to all projects
     const updatedForms = await Form.updateMany({}, {
         $addToSet: {
@@ -157,7 +168,6 @@ async function updateAdmins() {
         }
     })
 
-    console.log("Administrators updated")
 
 
 
@@ -171,6 +181,16 @@ router.post('/', auth, async (req, res) => {
 
     const user = await User.findOne({ "_id": req.user._id })
     const newUser = await User.find({ "email": req.body.email })
+    log({
+        file: './routes/makeAdmin.js',
+        line: '1186',
+        info: {
+            message:'Adding new admin'
+            
+            
+        },
+        type: 'message'
+    }, Log)
 
     if (!newUser || newUser.length === 0) {
         return res.status(400).send("Could not find the user you wanted to add")
@@ -186,6 +206,17 @@ router.post('/', auth, async (req, res) => {
             await updateAdmins()
             return res.status(200).send("Success")
         } catch (err) {
+            log({
+                file: './routes/makeAdmin.js',
+                line: '209',
+                info: {
+                    message:'Failed to add new admin',
+                    error: err
+                    
+                    
+                },
+                type: 'message'
+            }, Log)
             res.status(400).send(err)
         }
     }

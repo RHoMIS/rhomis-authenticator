@@ -22,23 +22,21 @@ const getCentralToken = require('./centralAuth')
 
 
 const log = require('../validation/log');
-
+const Log = require('../models/Log')
 
 
 router.post("/create", auth, async (req, res) => {
     // Authenticate for central server`
 
-    console.log("Logging server into central")
     const central_token = await getCentralToken()
 
     // Make sure there is a "name" argument provided in the request
     if (!req.body.name) {
-        console.log("Project name not included in request")
+
         return res.status(400).send("Need to include project name to create project")
     }
 
     if (req.body.name.length===0) {
-        console.log("Project name not included in request")
         return res.status(400).send("Need to include project name to create project")
     }
     
@@ -50,12 +48,10 @@ router.post("/create", auth, async (req, res) => {
     // Check if project exists in local mongoDb
     const projectExist = await Project.findOne({ name: req.body.name })
     if (projectExist) {
-        console.log("Project already exists in mongoDB")
         return res.status(400).send('Project already exists, please select a different name')
     }
 
     // Check if project exists in ODK central
-    console.log("Finding previous projects on ODK central")
     const projectResultCentral = await axios({
         url: process.env.CENTRAL_URL + "/v1/projects",
         method: "get",
@@ -66,12 +62,10 @@ router.post("/create", auth, async (req, res) => {
 
     const projectExistsCentral = projectResultCentral.data.filter(project => project.name === req.body.name)
     if (projectExistsCentral.length > 0) {
-        console.log("Project already exists in ODK central database")
         return res.status(400).send("Project already exists in Central database. Please choose another project name")
     }
     try {
         //Create a project on Central 
-        console.log("Creating the project on ODK central")
         const projectCreationResult = await axios({
             url: process.env.CENTRAL_URL + "/v1/projects",
             method: "post",
@@ -84,7 +78,6 @@ router.post("/create", auth, async (req, res) => {
         })
         // Check if the request returned a project with the Central ID
         if (projectCreationResult.data.id === undefined) {
-            console.log("Error when creating central project. No id returned")
             throw ("error in creating central project")
         }
         const projectInformation = {
@@ -95,7 +88,6 @@ router.post("/create", auth, async (req, res) => {
             forms: []
         }
 
-        console.log("Saving project detail onto the RHoMIS data API")
         // const projectCreateDataApi = await axios({
         //     url: apiURL + "/api/meta-data/project",
         //     method: "post",
@@ -106,7 +98,6 @@ router.post("/create", auth, async (req, res) => {
         // })
 
         // Save the new project in the database
-        console.log("Saving into the main database")
 
         const savedProject = await new Project(projectInformation)
         const saveResult = await savedProject.save()
@@ -114,7 +105,6 @@ router.post("/create", auth, async (req, res) => {
         //LINK THE USER CREATING THE PROJECT, TO THEIR PROJECT
         // Finding user all user information
         // const user = await User.findOne({ _id: req.user._id })
-        console.log("Adding the project information to the User who made the request")
         const updated_user = await User.updateOne(
             { _id: req.user._id },
             {
@@ -126,10 +116,21 @@ router.post("/create", auth, async (req, res) => {
             upsert: true
         }
         );
-        console.log("done")
         updateAdmins()
         return res.status(200).send("Project Saved")
     } catch (err) {
+        log({
+            file: './routes/projects.js',
+            line: '122',
+            info: {
+                message:'Could not create new project',
+                data:{
+                    error: err
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send(err)
     }
 })
@@ -249,6 +250,18 @@ router.delete("/delete", auth, async (req, res) => {
         return res.status(200).send(projectToDelete)
 
     } catch (err) {
+        log({
+            file: './routes/forms.js',
+            line: '361',
+            info: {
+                message:'Could not delete project',
+                data:{
+                    error: err
+                }
+                
+            },
+            type: 'error'
+        }, Log)
         return res.status(400).send(err)
     }
 })

@@ -17,10 +17,12 @@ router.options("*", cors());
 
 
 const log = require('../validation/log');
+const Log = require('../models/Log')
 
 
 
 router.post("/", auth, async (req, res) => {
+    
     // write file then read it
     //const writeStatus = await writeToFile(req, res)
     //const data = await readFile("./survey_modules/node_output.xlsx")
@@ -35,15 +37,13 @@ router.post("/", auth, async (req, res) => {
 
         let forms = JSON.parse(JSON.stringify(forms_found))
 
-        console.log("get submission count")
-        console.log(req.body)
+     
         if (req.body.getSubmissionCount === true) {
             if (req.body.projectName)
             {
             for (let form_index = 0; form_index < forms.length; form_index++) {
 
                 let projectName = forms[form_index].project
-                console.log(projectName)
                 if (projectName===req.body.projectName)
                 {
 
@@ -66,11 +66,31 @@ router.post("/", auth, async (req, res) => {
             projects: projects,
             forms: forms
         }
+        log({
+            file: './routes/metaData.js',
+            line: '73',
+            info: {
+                message:'Successfully retrieved user info',
+                
+                
+            },
+            type: 'message'
+        }, Log)
 
         res.status(200).send(result)
 
 
     } catch (err) {
+        log({
+            file: './routes/metaData.js',
+            line: '88',
+            info: {
+                message:'Could not retrieve user information',
+                error:err
+                
+            },
+            type: 'message'
+        }, Log)
         res.status(400).send(err)
     }
 })
@@ -85,7 +105,6 @@ async function getSubmissionCounts(props) {
         form: form,
         project: project
     })
-    console.log(url)
 
 
     const token = await getCentralAuthToken()
@@ -105,7 +124,16 @@ async function getSubmissionCounts(props) {
         },
     })
         .catch(function (error) {
-            console.log(error)
+            log({
+                file: './routes/metaData.js',
+                line: '132',
+                info: {
+                    message:'Could not get count of central submissions',
+                    error:error
+                    
+                },
+                type: 'message'
+            }, Log)
             throw error
         })
         submissions.draft = centralResponseDraft.data.length
@@ -123,7 +151,6 @@ async function getSubmissionCounts(props) {
             },
         })
             .catch(function (error) {
-                console.log(error)
                 throw error
             })
 

@@ -37,11 +37,25 @@ router.post("/publish", auth, async (req, res, next) => {
     try {
 
         // ******************** VALIDATE REQUEST ******************** //
-        console.log(req.query)
 
         const validatedReq = await validateRequestQuery(req, ['project_name', 'form_name'])
         const project = await Project.findOne({ name: req.query.project_name })
-        if (!project) throw new HttpError("Project does not exist in RHoMIS db", 400)
+        if (!project) {
+            log({
+                file: './routes/forms.js',
+                line: '44',
+                info: {
+                    message:'Could not create form, project does not exist',
+                    data:{
+                        user_id: req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            
+            throw new HttpError("Project does not exist in RHoMIS db", 400)
+        }
 
         const project_ID = project.centralID
 
@@ -54,6 +68,20 @@ router.post("/publish", auth, async (req, res, next) => {
         // Authenticate on ODK central
         const token = await getCentralToken()
 
+
+        log({
+            file: './routes/forms.js',
+            line: '74',
+            info: {
+                message:'Finalizing form on ODK central',
+                data:{
+                    user_id: req.user._id
+                }
+                
+            },
+            type: 'message'
+        }, Log)
+
         const centralResponse = await axios({
             method: "post",
             url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.draftVersion,
@@ -63,10 +91,33 @@ router.post("/publish", auth, async (req, res, next) => {
             },
         })
             .catch(function (error) {
+                log({
+                    file: './routes/forms.js',
+                    line: '96',
+                    info: {
+                        message:'Could not create draft in db',
+                        data:{
+                            error: error.message
+                        }
+                        
+                    },
+                    type: 'message'
+                }, Log)
                 throw error
             })
 
-
+            log({
+                file: './routes/forms.js',
+                line: '97',
+                info: {
+                    message:'Successfully finalized form on ODK central, updating in database',
+                    data:{
+                        user_id: req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
         // ******************** UPDATE RHOMIS DB ******************** //
         const updated_form = await Form.updateOne(
             {
@@ -81,8 +132,18 @@ router.post("/publish", auth, async (req, res, next) => {
             }
         )
 
-        console.log(updated_form)
-
+        log({
+            file: './routes/forms.js',
+            line: '44',
+            info: {
+                message:'Form finalized',
+                data:{
+                    user_id: req.user._id
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         return res.status(200).send("Form finalized")
 
     } catch (err) {
@@ -97,10 +158,20 @@ router.post("/publish", auth, async (req, res, next) => {
  * @queryParam form_version (optional - defaults to current form.formVersion + 1)
  */
 router.post("/new-draft", auth, async (req, res, next) => {
-    console.log("user: " + req.user._id)
-    console.log("project_name: " + req.query.project_name)
-    console.log("form_name: " + req.query.form_name)
-    console.log("form_version: " + req.query.form_version)
+
+    log({
+        file: './routes/forms.js',
+        line: '151',
+        info: {
+            message:'Creating new draft form ODK central',
+            data:{
+                user_id: req.user._id
+            }
+            
+        },
+        type: 'message'
+    }, Log)
+    
     try {
 
         // ******************** VALIDATE REQUEST ******************** //
@@ -109,16 +180,55 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
         // Find the project and form
         const project = await Project.findOne({ name: req.query.project_name })
-        if (!project) throw new HttpError("Could not find project", 400)
+        if (!project) {
+            log({
+                file: './routes/forms.js',
+                line: '174',
+                info: {
+                    message:'Could not find project for creating new draft',
+                    data:{
+                        user_id: req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Could not find project", 400)}
     
         // Check if the authenticated user is actually linked to the project under question
-        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
+        if (!project.users.includes(req.user._id)) {
+            log({
+                file: './routes/forms.js',
+                line: '190',
+                info: {
+                    message:'User does not have access to this project',
+                    data:{
+                        user_id: req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Authenticated user does not have permissions to modify this project", 401)}
 
         // Check if form exists
 
 
         const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name})
-        if (!form) throw new HttpError("Cannot find form to update", 400)
+        if (!form) {
+            log({
+                file: './routes/forms.js',
+                line: '209',
+                info: {
+                    message:'Cannot create new draft as cannot find form to update',
+                    data:{
+                        user_id: req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Cannot find form to update", 400)}
 
         // If form version doesn't exist in query, increment the existing form_version
         // Need to consider the cases where a draft form exists, where a published form
@@ -142,6 +252,18 @@ router.post("/new-draft", auth, async (req, res, next) => {
         project_ID = project.centralID
 
         // Send form to ODK central
+        log({
+            file: './routes/forms.js',
+            line: '245',
+            info: {
+                message:'Uploading new draft to ODK central',
+                data:{
+                    user_id: req.user._id
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         const centralResponse = await axios({
             method: "post",
             url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
@@ -153,7 +275,18 @@ router.post("/new-draft", auth, async (req, res, next) => {
             data: data
         })
             .catch(function (error) {
-                console.log(error)
+                log({
+                    file: './routes/forms.js',
+                    line: '151',
+                    info: {
+                        message:'Could not load new draft to ODK central',
+                        data:{
+                            error: error.message
+                        }
+                        
+                    },
+                    type: 'message'
+                }, Log)
                 throw error
             })
 
@@ -161,7 +294,6 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
         // ******************** UPDATE RHOMIS DB ******************** //
 
-        console.log("saving form")
         const formUpdate = await Form.updateOne(
             { 
                 name: req.query.form_name, 
@@ -173,11 +305,36 @@ router.post("/new-draft", auth, async (req, res, next) => {
             }
         )
 
-        if (formUpdate.nModified !== 1) throw new HttpError("Form is sent to ODK Central, but could not update formVersion in RHoMIS database", 500)
+        if (formUpdate.nModified !== 1) {
+            log({
+                file: './routes/forms.js',
+                line: '151',
+                info: {
+                    message:'Form saved to central, but could not update number in DB',
+                    data:{
+                        user_id:req.user._id
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Form is sent to ODK Central, but could not update formVersion in RHoMIS database", 500)}
         
         res.status(200).send("Form successfully updated")
 
     } catch (err) {
+        log({
+            file: './routes/forms.js',
+            line: '151',
+            info: {
+                message:'Could not create new draft',
+                data:{
+                    error: err.message
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         next(err)
     }
 })
@@ -192,11 +349,17 @@ router.post("/new-draft", auth, async (req, res, next) => {
  */
 router.post("/new", auth, async (req, res, next) => {
 
-    console.log("user: " + req.user._id)
-
-    console.log("project_name: " + req.query.project_name)
-    console.log("form_name: " + req.query.form_name)
-    console.log("form_version: " + req.query.form_version)
+    log({
+        file: './routes/forms.js',
+        line: '342',
+        info: {
+            message:'Creating brand new form',
+            data:{
+                error: error
+            }
+        },
+        type: 'message'
+    }, Log)
     try {
             
         // throw new HttpError('test')
@@ -205,14 +368,55 @@ router.post("/new", auth, async (req, res, next) => {
 
         // Check which project we are looking for
         const project = await Project.findOne({ name: req.query.project_name })
-        if (!project) throw new HttpError("Could not find project with this name", 400)
+        if (!project) {
+            log({
+                file: './routes/forms.js',
+                line: '361',
+                info: {
+                    message:'Could not find project to create new form',
+                    data:{
+                        error: error
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Could not find project with this name", 400)}
         
-        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
+        if (!project.users.includes(req.user._id)) {
+            log({
+                file: './routes/forms.js',
+                line: '378',
+                info: {
+                    message:'User did not have permission to create new form',
+                    data:{
+                        error: error
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
+        }
 
 
         // Check if form exists
         const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
-        if (form) throw new HttpError("There is already a form with this name in the database", 400)
+        if (form) {
+            log({
+                file: './routes/forms.js',
+                line: '395',
+                info: {
+                    message:'Already a form with this name in the db',
+                    data:{
+                        error: error
+                    }
+                    
+                },
+                type: 'message'
+            }, Log)
+            throw new HttpError("There is already a form with this name in the database", 400)
+        }
 
         
         // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
@@ -240,6 +444,18 @@ router.post("/new", auth, async (req, res, next) => {
             data: data
         })
             .catch(function (error) {
+                log({
+                    file: './routes/forms.js',
+                    line: '151',
+                    info: {
+                        message:'Could not create new form',
+                        data:{
+                            error: error.message
+                        }
+                        
+                    },
+                    type: 'message'
+                }, Log)
                 throw error
             })
 
@@ -260,6 +476,18 @@ router.post("/new", auth, async (req, res, next) => {
             }
         })
             .catch(function (error) {
+                log({
+                    file: './routes/forms.js',
+                    line: '479',
+                    info: {
+                        message:'Could not add user to ODK central app',
+                        data:{
+                            error: error.message
+                        }
+                        
+                    },
+                    type: 'message'
+                }, Log)
                 throw error
             })
 
@@ -274,6 +502,18 @@ router.post("/new", auth, async (req, res, next) => {
             },
         })
             .catch(function (error) {
+                log({
+                    file: './routes/forms.js',
+                    line: '507',
+                    info: {
+                        message:'Could not change app user assignment',
+                        data:{
+                            error: error.message
+                        }
+                        
+                    },
+                    type: 'message'
+                }, Log)
                 throw error
             })
 
@@ -310,8 +550,7 @@ router.post("/new", auth, async (req, res, next) => {
             });
 
         // Add form to forms collection
-        console.log(req.query.project_name)
-        console.log(centralResponse.data)
+      
 
         // const project = await Project.findOne(
         //     { name: req.query.project_name }
@@ -349,9 +588,7 @@ router.post("/new", auth, async (req, res, next) => {
 
         }
 
-        console.log("formInformation")
 
-        console.log(formInformation)
 
         // const formDataApi = await axios({
         //     url: apiURL + "/api/meta-data/form",
@@ -362,18 +599,39 @@ router.post("/new", auth, async (req, res, next) => {
         //     }
         // })
 
-        console.log("saving form")
         savedForm = await new Form(formInformation)
         savedForm.save()
 
         updateAdmins()
-
+        log({
+            file: './routes/forms.js',
+            line: '151',
+            info: {
+                message:'Successfully created new form',
+                data:{
+                    error: req.user._id
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         res.status(200).send("Form successfully created")
 
         // res.send(centralResponse.data)
 
     } catch (err) {
-        console.log(err)
+        log({
+            file: './routes/forms.js',
+            line: '151',
+            info: {
+                message:'Could not create new form',
+                data:{
+                    error: error
+                }
+                
+            },
+            type: 'message'
+        }, Log)
         next(err)
     }
 
