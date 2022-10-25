@@ -233,16 +233,49 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
     // Validate request
+    log({
+        file: './routes/auth.js',
+        line: '238',
+        info: {
+            message:'Attempting to login',
+
+        },
+        type: 'message'
+    }, Log)
+
     const { error } = loginValidator(req.body)
     if (error !== undefined) return res.status(400).send(error.details[0].message)
 
     // Checking if the user is already existent
     const user = await User.findOne({ email: req.body.email })
-    if (!user) return res.status(400).send('Email not found')
+    if (!user) {
+        log({
+            file: './routes/auth.js',
+            line: '252',
+            info: {
+                message:'Email not found',
+    
+            },
+            type: 'message'
+        }, Log)
+        return res.status(400).send('Email not found')
+    
+    }
 
     // Check if password is correct
     const validPass = await bcrypt.compare(req.body.password, user.password);
-    if (!validPass) return res.status(400).send('Incorrect password')
+    if (!validPass) {
+        log({
+            file: './routes/auth.js',
+            line: '252',
+            info: {
+                message:'Incorrect password',
+    
+            },
+            type: 'message'
+        }, Log)
+        return res.status(400).send('Incorrect password')
+    }
 
     var expiry = new Date()
     expiry.setHours(expiry.getHours() + 1)
@@ -267,22 +300,51 @@ router.post('/update', auth, async (req, res) => {
 })
 
 router.post('/project-manager', auth, async (req, res) => {
-    console.log("Finding the user")
-    console.log(req.body)
+    log({
+        file: './routes/auth.js',
+        line: '252',
+        info: {
+            message:'Adding project manager',
+            data:{
+                user_id: req.user._id
+            }
+        },
+        type: 'message'
+    }, Log)
     const otherUser = await User.findOne({ "email": req.body.email })
-    console.log(otherUser)
 
-    console.log("Checking if the user exists")
     if (!otherUser) {
+        log({
+            file: './routes/auth.js',
+            line: '317',
+            info: {
+                message:'User trying to add does not exist',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User does not exist")
     }
 
     if (otherUser.roles.projectManager.includes(req.body.projectName)) {
+        log({
+            file: './routes/auth.js',
+            line: '332',
+            info: {
+                message:'User they are adding is already a project manager',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User is already a project manager for this project")
     }
-    console.log("Checking if the IDs are the same")
 
     if (otherUser._id.toString() === req.user._id) {
+
         return res.status(400).send("Please enter the email of another user")
 
     }
@@ -290,7 +352,18 @@ router.post('/project-manager', auth, async (req, res) => {
 
     console.log("Updating DB")
     try {
-        console.log("Adding User to project")
+
+        log({
+            file: './routes/auth.js',
+            line: '356',
+            info: {
+                message:'Updating DB to reflect new user priveleges',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
 
         const updatedProject = await Project.updateOne(
             {
@@ -302,8 +375,18 @@ router.post('/project-manager', auth, async (req, res) => {
                 }
             })
 
-        console.log("Adding Users to forms")
 
+        log({
+            file: './routes/auth.js',
+            line: '379',
+            info: {
+                message:'Updating forms to reflect new user priveleges',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
 
         const updatedForms = await Form.updateMany({
             project: req.body.projectName
@@ -313,16 +396,27 @@ router.post('/project-manager', auth, async (req, res) => {
                     users: otherUser._id.toString()
                 }
             })
-        console.log("Adding forms to users")
+
         const formsToAdd = await Form.find({
             project: req.body.projectName
         })
-        console.log(formsToAdd)
-        const formIDs = formsToAdd.map((form) => form.name)
-        console.log(formIDs)
-        console.log("UserID")
 
-        console.log(otherUser._id)
+
+        const formIDs = formsToAdd.map((form) => form.name)
+
+
+        log({
+            file: './routes/auth.js',
+            line: '408',
+            info: {
+                message:'Updating user to have new projects and forms',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
+
         const updatedUser = await User.updateOne(
             {
                 _id: otherUser._id
@@ -334,7 +428,6 @@ router.post('/project-manager', auth, async (req, res) => {
                     "roles.dataCollector": { $each: formIDs }
                 }
             })
-        console.log(updatedUser)
 
         return res.status(200).send(updatedUser)
 
@@ -346,34 +439,73 @@ router.post('/project-manager', auth, async (req, res) => {
 
 router.post('/data-collector', auth, async (req, res) => {
 
-    console.log("Finding the user")
-
+    log({
+        file: './routes/auth.js',
+        line: '408',
+        info: {
+            message:'Adding data collector',
+            data:{
+                user_id: req.user._id
+            }
+        },
+        type: 'message'
+    }, Log)
     const otherUser = await User.findOne({ "email": req.body.email })
-    console.log("Checking if the user exists")
     if (!otherUser) {
+        log({
+            file: './routes/auth.js',
+            line: '455',
+            info: {
+                message:'User did not exist',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User does not exist")
     }
 
     if (otherUser.roles.dataCollector.includes(req.body.formName)) {
+        log({
+            file: './routes/auth.js',
+            line: '471',
+            info: {
+                message:'User already a data collector',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User is already a data collector for this project")
     }
-    console.log("Checking if the IDs are the same")
 
     if (otherUser._id.toString() === req.user._id) {
+        
         return res.status(400).send("Please enter the email of another user")
 
     }
 
 
-    console.log("Updating DB")
     try {
 
+        log({
+            file: './routes/auth.js',
+            line: '493',
+            info: {
+                message:'Adding form and project details for new data collector',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         const form = await Form.findOne(
             {
                 "name": req.body.formName
             })
 
-        console.log("Adding User to project")
         const updatedProject = await Project.updateOne(
             {
                 name: form.project
@@ -384,7 +516,6 @@ router.post('/data-collector', auth, async (req, res) => {
                 }
             })
 
-        console.log("Adding Users to forms")
         const updatedForms = await Form.updateOne({
             name: req.body.formName
         },
@@ -393,7 +524,6 @@ router.post('/data-collector', auth, async (req, res) => {
                     users: otherUser._id.toString()
                 }
             })
-        console.log("Adding form to user")
 
         const updatedUser = await User.updateOne(
             {
@@ -404,11 +534,32 @@ router.post('/data-collector', auth, async (req, res) => {
                     "roles.dataCollector": req.body.formName
                 }
             })
-        console.log(updatedUser)
-
+            log({
+                file: './routes/auth.js',
+                line: '539',
+                info: {
+                    message:'Successfully updated user',
+                    data:{
+                        user_id: req.user._id
+                    }
+                },
+                type: 'message'
+            }, Log)
         return res.status(200).send(updatedUser)
 
     } catch (err) {
+
+        log({
+            file: './routes/auth.js',
+            line: '539',
+            info: {
+                message:'Failed to update user',
+                data:{
+                    error: err
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send(err)
     }
 
@@ -416,33 +567,73 @@ router.post('/data-collector', auth, async (req, res) => {
 
 router.post('/analyst', auth, async (req, res) => {
 
+    log({
+        file: './routes/auth.js',
+        line: '570',
+        info: {
+            message:'Adding a data analyst',
+            data:{
+                user_id: req.user._id
+            }
+        },
+        type: 'message'
+    }, Log)
 
     const otherUser = await User.findOne({ "email": req.body.email })
-    console.log("Checking if the user exists")
     if (!otherUser) {
+        log({
+            file: './routes/auth.js',
+            line: '586',
+            info: {
+                message:'User does not exist',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User does not exist")
     }
 
     if (otherUser.roles.analyst.includes(req.body.formName)) {
+        log({
+            file: './routes/auth.js',
+            line: '599',
+            info: {
+                message:'User is already analyst for this project',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send("User is already an analyst for this project")
     }
-    console.log("Checking if the IDs are the same")
 
     if (otherUser._id.toString() === req.user._id) {
+        
         return res.status(400).send("Please enter the email of another user")
 
     }
 
 
-    console.log("Updating DB")
     try {
-
+        log({
+            file: './routes/auth.js',
+            line: '539',
+            info: {
+                message:'Updating DB to include form and projects of new analyst',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         const form = await Form.findOne(
             {
                 "name": req.body.formName
             })
 
-        console.log("Adding User to project")
         const updatedProject = await Project.updateOne(
             {
                 name: form.project
@@ -453,7 +644,6 @@ router.post('/analyst', auth, async (req, res) => {
                 }
             })
 
-        console.log("Adding Users to forms")
         const updatedForms = await Form.updateOne({
             name: req.body.formName
         },
@@ -462,7 +652,6 @@ router.post('/analyst', auth, async (req, res) => {
                     users: otherUser._id.toString()
                 }
             })
-        console.log("Adding form to user")
 
         const updatedUser = await User.updateOne(
             {
@@ -473,11 +662,21 @@ router.post('/analyst', auth, async (req, res) => {
                     "roles.analyst": req.body.formName
                 }
             })
-        console.log(updatedUser)
 
         return res.status(200).send(updatedUser)
 
     } catch (err) {
+        log({
+            file: './routes/auth.js',
+            line: '671',
+            info: {
+                message:'Failed to add new project analayst',
+                data:{
+                    user_id: req.user._id
+                }
+            },
+            type: 'message'
+        }, Log)
         return res.status(400).send(err)
     }
 
@@ -487,6 +686,17 @@ router.post('/analyst', auth, async (req, res) => {
 
 // Delete user
 router.delete('/delete', auth, async (req, res) => {
+    log({
+        file: './routes/auth.js',
+        line: '691',
+        info: {
+            message:'Deleting user',
+            data:{
+                user_id: req.user._id
+            }
+        },
+        type: 'message'
+    }, Log)
     const userToDelete = await User.findOne({ _id: req.user._id })
 
     if (!userToDelete) return res.status.apply(400).send('User does not exist in local db, cannot delete')
