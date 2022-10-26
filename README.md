@@ -60,3 +60,11 @@ with:
 * Tutorials on config [found here](https://www.npmjs.com/package/config)
 
 * Note to see if automatic deployment worked 
+
+# When setting up email AWS
+
+https://help.front.com/t/x17l65/setting-up-sendgrid-spfdkim-dns-records-in-aws
+
+Test email script:
+
+`NODE_ENV=production node test-email.js`
