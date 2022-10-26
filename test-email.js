@@ -16,27 +16,31 @@ if (process.env.NODE_ENV === 'production' ){
 
     };
 
+    var transporter= nodemailer.createTransport(mailConfig)
+
     transporter.sendMail({
-        from: '"Fred Foo 👻" <foo@example.com>', // sender address
-        to: "bar@example.com, baz@example.com", // list of receivers
+        from: process.env.SMTP_EMAIL, // sender address
+        to: "lgorman@turing.ac.uk", // list of receivers
         subject: "Hello ✔", // Subject line
         text: "Hello world?", // plain text body
         html: "<b>Hello world?</b>", // html body
       }).then(info=>{
-        console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
+        console.log('Email sent callback');
     });
     console.log(mailConfig)
 
 } else {
     // all emails are catched by ethereal.email
     mailConfig = {
-        host: 'lgorman@turing.ac.uk',
+        host: 'smtp.ethereal.email',
         port: 587,
         auth: {
             user: 'noelia.lindgren87@ethereal.email',
             pass: 'X98fAJwQX29rsprsTT'
         }
     };
+
+    var transporter= nodemailer.createTransport(mailConfig)
 
     transporter.sendMail({
         from: '"Fred Foo 👻" <foo@example.com>', // sender address
