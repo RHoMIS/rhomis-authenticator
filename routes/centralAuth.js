@@ -57,7 +57,7 @@ async function getCentralAuthToken() {
             line: '55',
             info: {
                 message:'Unable to get central token',
-                
+                error:err
             },
             type: 'message'
         }, Log)

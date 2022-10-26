@@ -1,4 +1,6 @@
 *.env
+*.env.production
+*.env.staging
 /node_modules
 test-script.js
 
