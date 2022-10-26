@@ -12,29 +12,43 @@ if (process.env.NODE_ENV === 'production' ){
             user: process.env.SMTP_EMAIL,
             pass: process.env.SMTP_PASSWORD
         }
+
+
     };
+
+    transporter.sendMail({
+        from: '"Fred Foo 👻" <foo@example.com>', // sender address
+        to: "bar@example.com, baz@example.com", // list of receivers
+        subject: "Hello ✔", // Subject line
+        text: "Hello world?", // plain text body
+        html: "<b>Hello world?</b>", // html body
+      }).then(info=>{
+        console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
+    });
+    console.log(mailConfig)
+
 } else {
     // all emails are catched by ethereal.email
     mailConfig = {
-        host: 'smtp.ethereal.email',
+        host: 'lgorman@turing.ac.uk',
         port: 587,
         auth: {
             user: 'noelia.lindgren87@ethereal.email',
             pass: 'X98fAJwQX29rsprsTT'
         }
     };
+
+    transporter.sendMail({
+        from: '"Fred Foo 👻" <foo@example.com>', // sender address
+        to: "bar@example.com, baz@example.com", // list of receivers
+        subject: "Hello ✔", // Subject line
+        text: "Hello world?", // plain text body
+        html: "<b>Hello world?</b>", // html body
+      }).then(info=>{
+        console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
+    });
+    console.log(mailConfig)
+
 }
 
-console.log(mailConfig)
 
-let transporter = nodemailer.createTransport(mailConfig);
-
-transporter.sendMail({
-    from: '"Fred Foo 👻" <foo@example.com>', // sender address
-    to: "bar@example.com, baz@example.com", // list of receivers
-    subject: "Hello ✔", // Subject line
-    text: "Hello world?", // plain text body
-    html: "<b>Hello world?</b>", // html body
-  }).then(info=>{
-    console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info));
-});
