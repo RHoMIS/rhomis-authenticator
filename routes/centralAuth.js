@@ -10,7 +10,7 @@ async function getCentralAuthToken() {
             file: './routes/centralAuth.js',
             line: '9',
             info: {
-                message:'Getting central authentication token',
+                message:'Getting central authentication token'
                 
             },
             type: 'message'
@@ -30,7 +30,7 @@ async function getCentralAuthToken() {
                 file: './routes/centralAuth.js',
                 line: '30',
                 info: {
-                    message:'Unable to get central token',
+                    message:'Unable to get central response'
                     
                 },
                 type: 'message'
@@ -42,7 +42,7 @@ async function getCentralAuthToken() {
                 file: './routes/centralAuth.js',
                 line: '42',
                 info: {
-                    message:'Unable to get central token',
+                    message:'Unable to get central token'
                     
                 },
                 type: 'message'

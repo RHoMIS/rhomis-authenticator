@@ -27,7 +27,6 @@ router.options("*", cors());
 
 router.get("/", auth, async (req, res) => {
     
-    const date = Date.now
 
     log({
         file: './routes/auth.js',
@@ -149,8 +148,7 @@ router.post('/register', async (req, res) => {
             file: './routes/auth.js',
             line: '148',
             info: {
-                message:'Cannot register email, user already exists',
-                'err':error
+                message:'Cannot register email, user already exists'
     
             },
             type: 'message'
@@ -169,9 +167,7 @@ router.post('/register', async (req, res) => {
             file: './routes/auth.js',
             line: '168',
             info: {
-                message:'Creating new user',
-                'err':error
-    
+                message:'Creating new user'
             },
             type: 'message'
         }, Log)
@@ -214,8 +210,7 @@ router.post('/register', async (req, res) => {
             file: './routes/auth.js',
             line: '214',
             info: {
-                message:'New user successfully created',
-                'err':error
+                message:'New user successfully created'
     
             },
             type: 'message'
@@ -253,7 +248,7 @@ router.post('/login', async (req, res) => {
             file: './routes/auth.js',
             line: '252',
             info: {
-                message:'Email not found',
+                message:'Email not found'
     
             },
             type: 'message'
@@ -269,8 +264,7 @@ router.post('/login', async (req, res) => {
             file: './routes/auth.js',
             line: '252',
             info: {
-                message:'Incorrect password',
-    
+                message:'Incorrect password'
             },
             type: 'message'
         }, Log)

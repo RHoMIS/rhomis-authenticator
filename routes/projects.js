@@ -28,7 +28,7 @@ const Log = require('../models/Log')
 router.post("/create", auth, async (req, res) => {
     // Authenticate for central server`
 
-    const central_token = await getCentralToken()
+
 
     // Make sure there is a "name" argument provided in the request
     if (!req.body.name) {
@@ -52,19 +52,32 @@ router.post("/create", auth, async (req, res) => {
     }
 
     // Check if project exists in ODK central
-    const projectResultCentral = await axios({
-        url: process.env.CENTRAL_URL + "/v1/projects",
-        method: "get",
-        headers: {
-            'Authorization': 'Bearer ' + central_token
-        }
-    })
-
-    const projectExistsCentral = projectResultCentral.data.filter(project => project.name === req.body.name)
-    if (projectExistsCentral.length > 0) {
-        return res.status(400).send("Project already exists in Central database. Please choose another project name")
-    }
+    
     try {
+
+
+        const central_token = await getCentralToken()
+
+        const projectResultCentral = await axios({
+            url: process.env.CENTRAL_URL + "/v1/projects",
+            method: "get",
+            headers: {
+                'Authorization': 'Bearer ' + central_token
+            }
+        })
+
+        if (projectResultCentral.data===undefined){
+            return res.status(400).send("Could not get projects from ODK central")
+
+        }
+
+        const projectExistsCentral = projectResultCentral.data.filter(project => project.name === req.body.name)
+        if (projectExistsCentral.length > 0) {
+            return res.status(400).send("Project already exists in Central database. Please choose another project name")
+        }
+
+
+
         //Create a project on Central 
         const projectCreationResult = await axios({
             url: process.env.CENTRAL_URL + "/v1/projects",

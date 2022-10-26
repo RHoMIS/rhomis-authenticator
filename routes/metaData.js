@@ -70,7 +70,7 @@ router.post("/", auth, async (req, res) => {
             file: './routes/metaData.js',
             line: '73',
             info: {
-                message:'Successfully retrieved user info',
+                message:'Successfully retrieved user info'
                 
                 
             },

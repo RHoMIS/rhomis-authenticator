@@ -100,6 +100,7 @@ router.post("/publish", auth, async (req, res, next) => {
         Authorization: "Bearer " + token,
       },
     }).catch(function (error) {
+      console.log(error);
       log(
         {
           file: "./routes/forms.js",
@@ -107,7 +108,7 @@ router.post("/publish", auth, async (req, res, next) => {
           info: {
             message: "Could not create draft in db",
             data: {
-              error: error.message,
+              error: error,
             },
           },
           type: "message",
@@ -125,7 +126,7 @@ router.post("/publish", auth, async (req, res, next) => {
           message:
             "Successfully finalized form on ODK central, updating in database",
           data: {
-            user_id: req.user._id,
+            user_id: req.user._id
           },
         },
         type: "message",
@@ -153,7 +154,7 @@ router.post("/publish", auth, async (req, res, next) => {
         info: {
           message: "Form finalized",
           data: {
-            user_id: req.user._id,
+            user_id: req.user._id
           },
         },
         type: "message",
@@ -180,7 +181,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
       info: {
         message: "Creating new draft form ODK central",
         data: {
-          user_id: req.user._id,
+          user_id: req.user._id
         },
       },
       type: "message",
@@ -203,7 +204,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
           info: {
             message: "Could not find project for creating new draft",
             data: {
-              user_id: req.user._id,
+              user_id: req.user._id
             },
           },
           type: "message",
@@ -222,7 +223,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
           info: {
             message: "User does not have access to this project",
             data: {
-              user_id: req.user._id,
+              user_id: req.user._id
             },
           },
           type: "message",
@@ -249,7 +250,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
           info: {
             message: "Cannot create new draft as cannot find form to update",
             data: {
-              user_id: req.user._id,
+              user_id: req.user._id
             },
           },
           type: "message",
@@ -286,7 +287,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
         info: {
           message: "Uploading new draft to ODK central",
           data: {
-            user_id: req.user._id,
+            user_id: req.user._id
           },
         },
         type: "message",
@@ -317,7 +318,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
           info: {
             message: "Could not load new draft to ODK central",
             data: {
-              error: error.message,
+              error: error,
             },
           },
           type: "message",
@@ -348,7 +349,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
           info: {
             message: "Form saved to central, but could not update number in DB",
             data: {
-              user_id: req.user._id,
+              user_id: req.user._id
             },
           },
           type: "message",
@@ -370,7 +371,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
         info: {
           message: "Could not create new draft",
           data: {
-            error: err.message,
+            error: err.message
           },
         },
         type: "message",
@@ -394,7 +395,7 @@ router.post("/new", auth, async (req, res, next) => {
       file: "./routes/forms.js",
       line: "342",
       info: {
-        message: "Creating brand new form",
+        message: "Creating brand new form"
       },
       type: "message",
     },
@@ -413,7 +414,7 @@ router.post("/new", auth, async (req, res, next) => {
           file: "./routes/forms.js",
           line: "361",
           info: {
-            message: "Could not find project to create new form",
+            message: "Could not find project to create new form"
           },
           type: "message",
         },
@@ -428,7 +429,7 @@ router.post("/new", auth, async (req, res, next) => {
           file: "./routes/forms.js",
           line: "378",
           info: {
-            message: "User did not have permission to create new form",
+            message: "User did not have permission to create new form"
           },
           type: "message",
         },
@@ -451,7 +452,7 @@ router.post("/new", auth, async (req, res, next) => {
           file: "./routes/forms.js",
           line: "395",
           info: {
-            message: "Already a form with this name in the db",
+            message: "Already a form with this name in the db"
           },
           type: "message",
         },
@@ -497,7 +498,7 @@ router.post("/new", auth, async (req, res, next) => {
           info: {
             message: "Could not create new form",
             data: {
-              error: error.message,
+              error: error
             },
           },
           type: "message",
@@ -530,7 +531,7 @@ router.post("/new", auth, async (req, res, next) => {
           info: {
             message: "Could not add user to ODK central app",
             data: {
-              error: error.message,
+              error: error
             },
           },
           type: "message",
@@ -566,7 +567,7 @@ router.post("/new", auth, async (req, res, next) => {
           info: {
             message: "Could not change app user assignment",
             data: {
-              error: error.message,
+              error: error
             },
           },
           type: "message",
@@ -702,7 +703,7 @@ router.post("/new", auth, async (req, res, next) => {
         info: {
           message: "Could not create new form",
           data: {
-            error: err.message,
+            error: err
           },
         },
         type: "message",
