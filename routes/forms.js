@@ -379,7 +379,9 @@ router.post("/new-draft", auth, async (req, res, next) => {
             form_update_mode: "match_exactly",
             autosend: "wifi_and_cellular",
           },
-          project: { name: "[Draft] " + req.query.form_name },
+          project: { name: "[Draft] " + req.query.form_name,
+          icon: "ð" },
+          admin:{}
         }
       }
     );
