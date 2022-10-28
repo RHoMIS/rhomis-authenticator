@@ -126,7 +126,8 @@ router.post("/publish", auth, async (req, res, next) => {
           message:
             "Successfully finalized form on ODK central, updating in database",
           data: {
-            user_id: req.user._id
+            user_id: req.user._id,
+            form: form
           },
         },
         type: "message",
@@ -134,6 +135,7 @@ router.post("/publish", auth, async (req, res, next) => {
       Log
     );
     // ******************** UPDATE RHOMIS DB ******************** //
+    let new_version = form.draftVersion
     const updated_form = await Form.updateOne(
       {
         name: req.query.form_name,
@@ -142,7 +144,7 @@ router.post("/publish", auth, async (req, res, next) => {
       {
         draft: false,
         live: true,
-        liveVersion: form.draftVersion,
+        liveVersion: new_version,
         draftVersion: null,
       }
     );
