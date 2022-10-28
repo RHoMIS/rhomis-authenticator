@@ -181,7 +181,8 @@ router.post("/new-draft", auth, async (req, res, next) => {
       info: {
         message: "Creating new draft form ODK central",
         data: {
-          user_id: req.user._id
+          user_id: req.user._id,
+          query: req.query
         },
       },
       type: "message",
@@ -330,6 +331,23 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
     // ******************** UPDATE RHOMIS DB ******************** //
 
+    const draftDetails = await axios({
+      method: "get",
+      url:
+        process.env.CENTRAL_URL +
+        "/v1/projects/" +
+        project_ID +
+        "/forms/" +
+        req.query.form_name +
+        "/draft",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+    }).catch(function (error) {
+      throw error;
+    });
+
     const formUpdate = await Form.updateOne(
       {
         name: req.query.form_name,
@@ -338,6 +356,22 @@ router.post("/new-draft", auth, async (req, res, next) => {
       {
         draftVersion: formVersion,
         draft: true,
+        draftCollectionDetails: {
+          general: {
+            server_url:
+              process.env.CENTRAL_URL +
+              "/v1/test/" +
+              draftDetails.data.draftToken +
+              "/projects/" +
+              project.centralID +
+              "/forms/" +
+              req.query.form_name +
+              "/draft",
+            form_update_mode: "match_exactly",
+            autosend: "wifi_and_cellular",
+          },
+          project: { name: "[Draft] " + req.query.form_name },
+        }
       }
     );
 
@@ -395,7 +429,8 @@ router.post("/new", auth, async (req, res, next) => {
       file: "./routes/forms.js",
       line: "342",
       info: {
-        message: "Creating brand new form"
+        message: "Creating brand new form",
+        query: req.query
       },
       type: "message",
     },
@@ -467,6 +502,7 @@ router.post("/new", auth, async (req, res, next) => {
     // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
     const project_ID = project.centralID;
     // const publish = req.query.publish ?? 'false'
+
     let formVersion = req.query.form_version ?? 1;
 
     // Authenticate on ODK central
@@ -639,9 +675,7 @@ router.post("/new", auth, async (req, res, next) => {
             "/v1/key/" +
             appUserCreation.data.token +
             "/projects/" +
-            project.centralID +
-            "/forms/" +
-            req.query.form_name,
+            project.centralID,
           form_update_mode: "match_exactly",
           autosend: "wifi_and_cellular",
         },
