@@ -106,7 +106,7 @@ router.post("/publish", auth, async (req, res, next) => {
           file: "./routes/forms.js",
           line: "96",
           info: {
-            message: "Could not create draft in db",
+            message: "Could publish form on central",
             data: {
               error: error,
             },
@@ -142,7 +142,7 @@ router.post("/publish", auth, async (req, res, next) => {
       {
         draft: false,
         live: true,
-        liveVersion: form.formVersion,
+        liveVersion: form.draftVersion,
         draftVersion: null,
       }
     );
@@ -264,7 +264,14 @@ router.post("/new-draft", auth, async (req, res, next) => {
     // If form version doesn't exist in query, increment the existing form_version
     // Need to consider the cases where a draft form exists, where a published form
     // exists, and where both exist.
-    let formVersion = req.query.form_version ?? Number(form.draftVersion) + 1;
+
+    // Whether to use live or draft version number as basis
+
+    let old_version_number = form.draftVersion ?? form.liveVersion;
+
+
+
+    let formVersion = req.query.form_version ?? Number(old_version_number) + 1;
 
     // console.log("formVersion")
 
@@ -695,7 +702,11 @@ router.post("/new", auth, async (req, res, next) => {
           form_update_mode: "match_exactly",
           autosend: "wifi_and_cellular",
         },
-        project: { name: "[Draft] " + req.query.form_name },
+        project: { 
+          name: "[Draft] " + req.query.form_name,
+          icon: "ð" 
+        },
+        admin:{}
       },
     };
 
