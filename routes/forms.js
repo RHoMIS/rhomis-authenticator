@@ -135,7 +135,7 @@ router.post("/publish", auth, async (req, res, next) => {
       Log
     );
     // ******************** UPDATE RHOMIS DB ******************** //
-    let new_version = form.draftVersion
+    let new_version = String(form.draftVersion)
     const updated_form = await Form.updateOne(
       {
         name: req.query.form_name,
@@ -363,7 +363,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
         project: req.query.project_name,
       },
       {
-        draftVersion: formVersion,
+        draftVersion: String(formVersion),
         draft: true,
         draftCollectionDetails: {
           general: {
@@ -671,7 +671,7 @@ router.post("/new", auth, async (req, res, next) => {
     const formInformation = {
       name: req.query.form_name,
       project: req.query.project_name,
-      draftVersion: formVersion,
+      draftVersion: String(formVersion),
       users: [req.user._id],
       centralID: centralResponse.data.xmlFormId,
       draft: true,
